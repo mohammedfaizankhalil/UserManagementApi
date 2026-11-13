@@ -3,11 +3,11 @@ using UserManagementApi.Models;
 namespace UserManagementApi.DTOs;
 
 public record UserResponse(
-    Guid id,
-    string Usernname,
-    string Eamil,
+    Guid Id,
+    string Username,
+    string Email,
     int Age,
     DateTimeOffset CreatedAt)
 {
-    public static UserResponse FromUser(User user) => new UserResponse(user.Id, user.Username, user.Email, user.Age, user.CreatedAt);
+    public static UserResponse FromUser(User user) => new(user.Id, user.Username, user.Email, user.Age, user.CreatedAt);
 }

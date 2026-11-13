@@ -28,7 +28,7 @@ This document tracks progress, covered topics, proficiency levels, and the struc
 ## Part 2: Long-Term Backend & System Architect Roadmap
 
 - **Phase 1 — C#, SQL & Minimal API Vertical Slice:** ✅ **Completed** — Minimal API routing, parameterized SQL, `NpgsqlDataReader`, `POST` & `GET by ID`.
-- **Phase 2 — Clean Architecture, DI Lifetimes & Full CRUD:** 🔄 **In Progress** — Layered structure, `NpgsqlDataSource` pooling, `Result<T>` pattern, `GET all` & `DELETE` completed. **Next:** `UserResponse` DTOs, `ErrorType` mapping, and `PUT /api/users/{id:guid}`.
+- **Phase 2 — Clean Architecture, DI Lifetimes & Full CRUD:** 🔄 **In Progress** — Layered structure, `NpgsqlDataSource` pooling, `Result<T>` pattern, response DTO mapping, and `PUT /api/users/{id:guid}` are being finalized. **Current focus:** validate runtime behavior after configuring the PostgreSQL connection secret.
 - **Phase 3 — Production API Hardening & Data Integrity:** ⏳ **Pending** — Database `UNIQUE` constraints & concurrency race conditions, global exception handling (`ProblemDetails`), pagination/filtering, and PostgreSQL indexing (`EXPLAIN ANALYZE`).
 - **Phase 4 — Security, Authentication & Authorization:** ⏳ **Pending** — Password hashing (BCrypt/Argon2), login endpoint, JWT authentication, role-based authorization, and `CancellationToken` propagation.
 - **Phase 5 — Automated Testing, Logging & Docker:** ⏳ **Pending** — Structured logging (`ILogger`), unit tests (`xUnit`), integration tests against real Postgres (`Testcontainers`), and Docker Compose setup.
@@ -58,7 +58,7 @@ This document tracks progress, covered topics, proficiency levels, and the struc
 | Result Pattern (`Result<T>`) vs. HTTP Response Factory (`Results`) | Level 2 (Understood) | Distinguishes domain/service outcome wrappers from ASP.NET Core HTTP response builders. |
 | Route Constraints (`{id:guid}`) | Level 2 (Understood) | Reviewed how non-GUID segments fail route matching and return `404 Not Found` before handler execution. |
 | Secret Management (`dotnet user-secrets`) & Git/GitHub | Level 3 (Independently Applied) | Removed plaintext password from `appsettings.json`, configured user secrets, initialized Git, and pushed to GitHub. |
-| Request & Response DTO Separation | Level 1 (Introduced) | `RegisterUserRequest` implemented; `UserResponse` and `UpdateUserRequest` ready for implementation. |
+| Request & Response DTO Separation | Level 2 (Understood) | Response mapping is now implemented with `UserResponse.FromUser(...)`; the PUT route passes `UpdateUserRequest` through service validation and repository updates. |
 
 ---
 
@@ -72,7 +72,7 @@ This document tracks progress, covered topics, proficiency levels, and the struc
 | `Repositories/IUserRepository.cs` & `PostgresUserRepository.cs` | Level 2 (Understood) | Implements `AddAsync`, `EmailExistsAsync`, `GetByIdAsync`, `GetAllAsync`, and `DeleteAsync`. |
 | `Services/UserService.cs` | Level 2 (Understood) | Encapsulates input validation and business rules decoupled from HTTP and SQL. |
 | `POST /api/users`, `GET /api/users`, `GET /api/users/{id:guid}`, `DELETE /api/users/{id:guid}` | Level 3 (Independently Applied) | Built, debugged, and verified end-to-end via Swagger UI and pgAdmin 4. |
-| `DTOs/UserResponse.cs` & `PUT /api/users/{id:guid}` | Level 1 (Introduced) | Architecture and code walkthrough provided; awaiting implementation and testing. |
+| `DTOs/UserResponse.cs` & `PUT /api/users/{id:guid}` | Level 2 (Understood) | Response DTO fields were corrected, the PUT endpoint logic was implemented, and runtime validation is pending the database connection string secret. |
 
 ---
 
@@ -93,3 +93,7 @@ This document tracks progress, covered topics, proficiency levels, and the struc
   - Completed 10-question architecture & Postgres recall quiz (8/10).
   - Created customized `learning/command.md` and `learning/LEARNING_TRACKER.md` for VS Code Copilot mentorship.
   - **Active Next Step:** Implement `DTOs/UserResponse.cs`, `DTOs/UpdateUserRequest.cs`, `ErrorType` in `Result<T>`, and `PUT /api/users/{id:guid}`.
+* **Session 5 (2026-11-13 — Response DTOs & PUT Flow):**
+  - Corrected `UserResponse` mapping and fixed the GET-by-id route binding bug that was blocking startup.
+  - Patched the update SQL and service error flow, and validated the project compiles successfully.
+  - **Environment note:** runtime API requests still require a valid `ConnectionStrings:DefaultConnection` secret for PostgreSQL.

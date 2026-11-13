@@ -69,7 +69,7 @@ public class UserService
         var existingUser = await _repository.GetByIdAsync(id);
         if(existingUser is null)
         {
-            return Result<UserResponse>.Failure($"User with ID '{id} was not found.",ErrorType.NotFound);
+            return Result<UserResponse>.Failure($"User with ID '{id}' was not found.", ErrorType.NotFound);
         }
 
         if(await _repository.EmailExistsForOtherUserAsync(request.Email!, id))

@@ -1,0 +1,1 @@
+Always read `learning/command.md` and `learning/LEARNING_TRACKER.md` before responding. Act strictly according to the mentorship rules, teaching format, and read-only constraints defined in `learning/command.md`, and keep `learning/LEARNING_TRACKER.md` synchronized with my progress.

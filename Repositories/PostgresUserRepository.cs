@@ -44,7 +44,7 @@ public class PostgresUserRepository : IUserRepository
         string sql = """
         UPDATE app_users
         SET username = @username,
-            email = @ email,
+            email = @email,
             age = @age
         WHERE id = @id;
         """;
@@ -58,7 +58,7 @@ public class PostgresUserRepository : IUserRepository
         int rowsAffected = await cmd.ExecuteNonQueryAsync();
         return rowsAffected > 0;
     }    
-    
+
     public async Task AddAsync(User user)
     {
         string sql= """

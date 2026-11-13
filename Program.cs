@@ -44,7 +44,7 @@ app.MapPost("/api/users", async (RegisterUserRequest request, UserService userSe
         : Results.BadRequest(new{error = result.Error});
     }
 
-    return Results.Created($"/api/users/{result.Value!.id}", result.Value);
+    return Results.Created($"/api/users/{result.Value!.Id}", result.Value);
 })
 .WithName("RegisterUser");
 
@@ -66,7 +66,7 @@ app.MapPut("/api/users/{id:guid}", async (Guid id, UpdateUserRequest request, Us
 })
 .WithName("UpdateUser");
 
-app.MapGet("/api/users/{id:guid}", async (Guid id, UpdateUserRequest request, UserService userService) =>
+app.MapGet("/api/users/{id:guid}", async (Guid id, UserService userService) =>
 {
     var result = await userService.GetByIdAsync(id);
 
