@@ -39,14 +39,34 @@ app.MapPost("/api/users", async (RegisterUserRequest request, UserService userSe
 
     if (!result.IsSuccess)
     {
-        return Results.BadRequest(new { error = result.Error });
+        return result.ErrorType == ErrorType.Conflict
+        ? Results.Conflict(new {error = result.Error})
+        : Results.BadRequest(new{error = result.Error});
     }
 
-    return Results.Created($"/api/users/{result.Value!.Id}", result.Value);
+    return Results.Created($"/api/users/{result.Value!.id}", result.Value);
 })
 .WithName("RegisterUser");
 
-app.MapGet("/api/users/{id:guid}", async (Guid id, UserService userService) =>
+app.MapPut("/api/users/{id:guid}", async (Guid id, UpdateUserRequest request, UserService userService) =>
+{
+    var result = await userService.UpdateAsync(id, request);
+
+    if (!result.IsSuccess)
+    {
+        return result.ErrorType switch
+        {
+            ErrorType.NotFound => Results.NotFound(new { error = result.Error }),
+            ErrorType.Conflict => Results.Conflict(new { error = result.Error }),
+            _ => Results.BadRequest(new { error = result.Error })
+        };
+    }
+
+    return Results.Ok(result.Value);
+})
+.WithName("UpdateUser");
+
+app.MapGet("/api/users/{id:guid}", async (Guid id, UpdateUserRequest request, UserService userService) =>
 {
     var result = await userService.GetByIdAsync(id);
 

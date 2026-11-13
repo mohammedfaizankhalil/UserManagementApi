@@ -24,6 +24,41 @@ public class PostgresUserRepository : IUserRepository
         return count > 0;
     }
 
+    public async Task<bool> EmailExistsForOtherUserAsync(string email, Guid exludeUserId)
+    {
+        string sql = """
+        SELECT COUNT(1)
+        FROM app_users
+        WHERE LOWER(email) = LOWER(@email) AND id <> @id;
+        """;
+        await using var cmd = _dataSource.CreateCommand(sql);
+        cmd.Parameters.AddWithValue("@email", email);
+        cmd.Parameters.AddWithValue("@id", exludeUserId);
+
+        var count = (long)(await cmd.ExecuteScalarAsync() ?? 0L);
+        return count > 0;
+    }
+
+    public async Task<bool> UpdateAsync(User user)
+    {
+        string sql = """
+        UPDATE app_users
+        SET username = @username,
+            email = @ email,
+            age = @age
+        WHERE id = @id;
+        """;
+
+        await using var cmd = _dataSource.CreateCommand(sql);
+        cmd.Parameters.AddWithValue("@id",user.Id);
+        cmd.Parameters.AddWithValue("@username", user.Username);
+        cmd.Parameters.AddWithValue("@email",user.Email);
+        cmd.Parameters.AddWithValue("@age",user.Age);
+
+        int rowsAffected = await cmd.ExecuteNonQueryAsync();
+        return rowsAffected > 0;
+    }    
+    
     public async Task AddAsync(User user)
     {
         string sql= """

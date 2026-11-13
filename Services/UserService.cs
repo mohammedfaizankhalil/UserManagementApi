@@ -13,26 +13,18 @@ public class UserService
         _repository = repository;
     }
 
-    public async Task<Result<User>> RegisterAsync(RegisterUserRequest request)
+    public async Task<Result<UserResponse>> RegisterAsync(RegisterUserRequest request)
     {
-        if (string.IsNullOrWhiteSpace(request.Username) || request.Username.Length < 3)
+        var validationError = ValidateUserFields(request.Username, request.Email, request.Age);
+
+        if (validationError is not null)
         {
-            return Result<User>.Failure("Username must be at least 3 characters.");
+            return Result<UserResponse>.Failure(validationError, ErrorType.Validation);
         }
 
-        if (string.IsNullOrWhiteSpace(request.Email) || !request.Email.Contains('@') || !request.Email.Contains('.'))
+        if(await _repository.EmailExistsAsync(request.Email!))
         {
-            return Result<User>.Failure("Invalid email address.");
-        }
-
-        if (request.Age < 18)
-        {
-            return Result<User>.Failure("User must be 18 or older.");
-        }
-
-        if (await _repository.EmailExistsAsync(request.Email!))
-        {
-            return Result<User>.Failure("A user with this email already exists.");
+            return Result<UserResponse>.Failure("A user with this email already exists!", ErrorType.Conflict);
         }
 
         var newUser = new User(
@@ -45,36 +37,81 @@ public class UserService
 
         await _repository.AddAsync(newUser);
 
-        return Result<User>.Success(newUser);
+        return Result<UserResponse>.Success(UserResponse.FromUser(newUser));
     }
 
-    public async Task<Result<User>> GetByIdAsync(Guid id)
+    public async Task<Result<UserResponse>> GetByIdAsync(Guid id)
     {
         var user = await _repository.GetByIdAsync(id);
 
         if (user is null)
         {
-            return Result<User>.Failure($"User with ID '{id}' was not found.");
+            return Result<UserResponse>.Failure($"User with ID '{id}' was not found.", ErrorType.NotFound);
         }
 
-        return Result<User>.Success(user);
+        return Result<UserResponse>.Success(UserResponse.FromUser(user));
     }
 
-    public async Task<IReadOnlyList<User>> GetAllAsync()
+    public async Task<IReadOnlyList<UserResponse>> GetAllAsync()
     {
-        return await _repository.GetAllAsync();
+        var users = await _repository.GetAllAsync();
+        return users.Select(UserResponse.FromUser).ToList();
     }
 
+    public async Task<Result<UserResponse>> UpdateAsync(Guid id, UpdateUserRequest request)
+    {
+        var validationError = ValidateUserFields(request.Username, request.Email, request.Age);
+        if(validationError is not null)
+        {
+            return Result<UserResponse>.Failure(validationError,ErrorType.Validation);
+        }
+
+        var existingUser = await _repository.GetByIdAsync(id);
+        if(existingUser is null)
+        {
+            return Result<UserResponse>.Failure($"User with ID '{id} was not found.",ErrorType.NotFound);
+        }
+
+        if(await _repository.EmailExistsForOtherUserAsync(request.Email!, id))
+        {
+            return Result<UserResponse>.Failure("Another user with this email already exists!", ErrorType.Conflict);
+        }
+
+        existingUser.Update(request.Username!, request.Email!, request.Age);
+        await _repository.UpdateAsync(existingUser);
+
+        return Result<UserResponse>.Success(UserResponse.FromUser(existingUser));
+    }
     public async Task<Result<bool>> DeleteAsync(Guid id)
     {
         bool isDeleted = await _repository.DeleteAsync(id);
 
         if (!isDeleted)
         {
-            return Result<bool>.Failure($"User with ID '{id}' was not found.");
+            return Result<bool>.Failure($"User with ID '{id}' was not found.",ErrorType.NotFound);
         }
 
         return Result<bool>.Success(true);
+    }
+
+    public static string? ValidateUserFields(string? username, string? email, int age)
+    {
+        if(string.IsNullOrWhiteSpace(username) || username.Length is < 3)
+        {
+            return "Username must be at least 3 characters.";
+        }
+
+        if(string.IsNullOrWhiteSpace(email) || !email.Contains('@') || !email.Contains('.'))
+        {
+            return "Invalid email address!";
+        }
+
+        if(age < 18)
+        {
+            return "User must be 18 or above!";
+        }
+
+        return null;
     }
 
 }
