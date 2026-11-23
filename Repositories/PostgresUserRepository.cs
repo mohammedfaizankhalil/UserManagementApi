@@ -55,11 +55,17 @@ public class PostgresUserRepository : IUserRepository
         cmd.Parameters.AddWithValue("@email",user.Email);
         cmd.Parameters.AddWithValue("@age",user.Age);
 
+        try{
         int rowsAffected = await cmd.ExecuteNonQueryAsync();
         return rowsAffected > 0;
+        }
+        catch (PostgresException ex) when (ex.SqlState == PostgresErrorCodes.UniqueViolation)
+        {
+            return false;
+        }
     }    
 
-    public async Task AddAsync(User user)
+    public async Task<bool> AddAsync(User user)
     {
         string sql= """
         INSERT INTO app_users (id, username, email, age, created_at)
@@ -73,7 +79,14 @@ public class PostgresUserRepository : IUserRepository
         cmd.Parameters.AddWithValue("@age", user.Age);
         cmd.Parameters.AddWithValue("@created_at", user.CreatedAt);
         
-        await cmd.ExecuteNonQueryAsync();
+        try{
+            await cmd.ExecuteNonQueryAsync();
+            return true;
+        }
+        catch (PostgresException ex) when (ex.SqlState == PostgresErrorCodes.UniqueViolation)
+        {
+            return false;
+        }
     }
 
     public async Task<User?> GetByIdAsync(Guid id)

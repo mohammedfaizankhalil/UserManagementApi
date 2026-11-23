@@ -35,7 +35,12 @@ public class UserService
             request.Age
         );
 
-        await _repository.AddAsync(newUser);
+        bool created = await _repository.AddAsync(newUser);
+
+        if (!created)
+        {
+            return Result<UserResponse>.Failure("A user with this email already exists!", ErrorType.Conflict);
+        }
 
         return Result<UserResponse>.Success(UserResponse.FromUser(newUser));
     }
@@ -78,7 +83,12 @@ public class UserService
         }
 
         existingUser.Update(request.Username!, request.Email!, request.Age);
-        await _repository.UpdateAsync(existingUser);
+        bool updated =await _repository.UpdateAsync(existingUser);
+
+        if (!updated)
+        {
+            return Result<UserResponse>.Failure("Another User with this email already exists!", ErrorType.Conflict);
+        }
 
         return Result<UserResponse>.Success(UserResponse.FromUser(existingUser));
     }
